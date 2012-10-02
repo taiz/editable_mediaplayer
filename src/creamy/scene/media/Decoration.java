@@ -2,6 +2,7 @@ package creamy.scene.media;
 
 import javafx.animation.Transition;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.util.Duration;
 
 public abstract class Decoration extends Group {
@@ -48,4 +49,12 @@ public abstract class Decoration extends Group {
     public abstract void setStartAnimation(StartAnimation type, double time);
 
     public abstract void setEndAnimation(EndAnimation type, double time);
+    
+    protected boolean isAdded(Group sheet) {
+        for (Node node : sheet.getChildren()) {
+            if (node == this) return true;
+            System.out.println("added");
+        }
+        return false;
+    }
 }

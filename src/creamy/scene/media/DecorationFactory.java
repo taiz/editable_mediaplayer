@@ -31,6 +31,7 @@ public class DecorationFactory {
         public Point() {
             setFill(Color.WHITE);
             setRadius(RADIUS);
+            /*
             setEffect(
                 DropShadowBuilder.create()
                     .offsetX(1.0)
@@ -38,6 +39,7 @@ public class DecorationFactory {
                     .color(Color.CORAL)
                     .build()
             );
+            */
             setCache(true);
         }
     }

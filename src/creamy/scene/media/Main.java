@@ -43,7 +43,8 @@ public class Main extends Application {
         //playerPane.setPrefSize(480, 360);
         playerPane.setPrefSize(800, 600);
         playerPane.setMaxSize(800, 600);
-        //getStylesheets().add("ensemble/samples/media/OverlayMediaPlayer.css");
+        root.getStylesheets().add("creamy/scene/media/PlayerPane.css");
+
         root.getChildren().add(playerPane);
     }
  

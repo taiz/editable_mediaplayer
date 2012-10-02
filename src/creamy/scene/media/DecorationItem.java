@@ -16,6 +16,8 @@ public class DecorationItem extends Decoration {
     private Node node;
     private DoubleProperty x = new SimpleDoubleProperty();
     private DoubleProperty y = new SimpleDoubleProperty();
+    private DoubleProperty translateX = new SimpleDoubleProperty();
+    private DoubleProperty translateY = new SimpleDoubleProperty();
     private DoubleProperty width  = new SimpleDoubleProperty();
     private DoubleProperty height = new SimpleDoubleProperty();
 
@@ -41,17 +43,21 @@ public class DecorationItem extends Decoration {
 
     @Override
     public void adjustPosition(double width, double height) {
-        x.set(x.get() * width);
-        y.set(y.get() * height);
+        translateX.set(x.get() * width);
+        translateY.set(y.get() * height);
         this.width.set(width);
         this.height.set(height);
     }
 
     @Override
     public void show(Group sheet) {
-        sheet.getChildren().add(this);
-        setTranslateX(x.get());
-        setTranslateY(y.get());
+        try {
+            sheet.getChildren().add(this);
+        } catch(IllegalArgumentException ex) {
+            return;
+        }
+        setTranslateX(translateX.get());
+        setTranslateY(translateY.get());
         if (startAnimation == null) return;
         if (startAnimation == StartAnimation.FADE_IN) setOpacity(0.0);
         startTransition.play();
@@ -89,31 +95,31 @@ public class DecorationItem extends Decoration {
             switch(type) {
                 case TOP_IN:
                     startAnimation = StartAnimation.TOP_IN;
-                    tr.fromXProperty().bind(x);
+                    tr.fromXProperty().bind(translateX);
                     tr.setFromY(0);
-                    tr.toXProperty().bind(x);
-                    tr.toYProperty().bind(y);
+                    tr.toXProperty().bind(translateX);
+                    tr.toYProperty().bind(translateY);
                     break;
                 case LEFT_IN:
                     startAnimation = StartAnimation.LEFT_IN;
                     tr.setFromX(0);
-                    tr.fromYProperty().bind(y);
-                    tr.toXProperty().bind(x);
-                    tr.toYProperty().bind(y);
+                    tr.fromYProperty().bind(translateY);
+                    tr.toXProperty().bind(translateX);
+                    tr.toYProperty().bind(translateY);
                     break;
                 case BOTTOM_IN:
                     startAnimation = StartAnimation.BOTTOM_IN;
-                    tr.fromXProperty().bind(x);
+                    tr.fromXProperty().bind(translateX);
                     tr.fromYProperty().bind(height);
-                    tr.toXProperty().bind(x);
-                    tr.toYProperty().bind(y);
+                    tr.toXProperty().bind(translateX);
+                    tr.toYProperty().bind(translateY);
                     break;
                 case RIGHT_IN:
                     startAnimation = StartAnimation.RIGHT_IN;
                     tr.fromXProperty().bind(width);
-                    tr.fromYProperty().bind(y);
-                    tr.toXProperty().bind(x);
-                    tr.toYProperty().bind(y);
+                    tr.fromYProperty().bind(translateY);
+                    tr.toXProperty().bind(translateX);
+                    tr.toYProperty().bind(translateY);
                     break;
             }
             startTransition = tr;
@@ -136,23 +142,23 @@ public class DecorationItem extends Decoration {
             switch(type) {
                 case TOP_OUT:
                     endAnimation = EndAnimation.TOP_OUT;
-                    tr.toXProperty().bind(x);
+                    tr.toXProperty().bind(translateX);
                     tr.setToY(0);
                     break;
                 case LEFT_OUT:
                     endAnimation = EndAnimation.LEFT_OUT;
                     tr.setToX(0);
-                    tr.toYProperty().bind(y);
+                    tr.toYProperty().bind(translateY);
                     break;
                 case BOTTOM_OUT:
                     endAnimation = EndAnimation.BOTTOM_OUT;
-                    tr.toXProperty().bind(x);
+                    tr.toXProperty().bind(translateX);
                     tr.toYProperty().bind(height);
                     break;
                 case RIGHT_OUT:
                     endAnimation = EndAnimation.RIGHT_OUT;
                     tr.toXProperty().bind(width);
-                    tr.toYProperty().bind(y);
+                    tr.toYProperty().bind(translateY);
                     break;
             }
             endTransition = tr;

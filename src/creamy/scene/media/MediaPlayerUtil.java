@@ -15,6 +15,8 @@ public class MediaPlayerUtil {
     }
 
     private ObjectProperty<MediaPlayer> mediaPlayer = new SimpleObjectProperty<MediaPlayer>();
+    private List<StatusListener> playingListeners = new ArrayList<StatusListener>();
+    private List<StatusListener> readyListeners = new ArrayList<StatusListener>();
     private List<StatusListener> endOfMediaListeners = new ArrayList<StatusListener>();
     private List<StatusListener> stoppedListeners = new ArrayList<StatusListener>();
 
@@ -28,12 +30,38 @@ public class MediaPlayerUtil {
         });
         if (mediaPlayer.get() != null) initialize();
     }
+    
+    public MediaPlayer getMeidaPlayer() {
+        return this.mediaPlayer.get();
+    }
 
     private void initialize() {
+        setPlayingListener();
+        setReadyListener();
         setEndOfMediaListenr();
         setStoppedListener();
     }
 
+    private void setPlayingListener() {
+        playingListeners.clear();
+        mediaPlayer.get().setOnPlaying(new Runnable() {
+            @Override
+            public void run() {
+                notifyListeners(playingListeners);
+            }
+        });
+    }
+    
+    private void setReadyListener() {
+        readyListeners.clear();
+        mediaPlayer.get().setOnReady(new Runnable() {
+            @Override
+            public void run() {
+                notifyListeners(readyListeners);
+            }
+        });
+    }
+        
     private void setEndOfMediaListenr() {
         endOfMediaListeners.clear();
         mediaPlayer.get().setOnEndOfMedia(new Runnable() {
@@ -46,7 +74,7 @@ public class MediaPlayerUtil {
 
     private void setStoppedListener() {
         stoppedListeners.clear();
-        mediaPlayer.get().setOnEndOfMedia(new Runnable() {
+        mediaPlayer.get().setOnStopped(new Runnable() {
             @Override
             public void run() {
                 notifyListeners(stoppedListeners);
@@ -62,9 +90,26 @@ public class MediaPlayerUtil {
                     listener.changed();
                 }
             });
+            //listener.changed();
         }
     }
 
+    public void addPlayingListener(StatusListener listener) {
+        playingListeners.add(listener);
+    }
+
+    public void removePlayingListener(StatusListener listener) {
+        playingListeners.remove(listener);
+    }
+    
+    public void addReadyListener(StatusListener listener) {
+        readyListeners.add(listener);
+    }
+
+    public void removeReadyListener(StatusListener listener) {
+        readyListeners.remove(listener);
+    }
+    
     public void addEndOfMediaListener(StatusListener listener) {
         endOfMediaListeners.add(listener);
     }

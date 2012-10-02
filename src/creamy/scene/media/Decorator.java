@@ -24,6 +24,7 @@ import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.MediaMarkerEvent;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -36,32 +37,33 @@ public class Decorator extends Group {
     }
 
     private final MediaView mediaView;
-    private final ObjectProperty<MediaPlayer> mediaPlayer = new SimpleObjectProperty<MediaPlayer>();
-
-    public Decorator(MediaView mediaView, ObjectProperty<MediaPlayer> mediaPlayer) {
+    //private final ObjectProperty<MediaPlayer> mediaPlayer = new SimpleObjectProperty<MediaPlayer>();
+    private final ObjectProperty<MediaPlayerUtil> mediaPlayerUtil = new SimpleObjectProperty<MediaPlayerUtil>();;
+    
+    public Decorator(MediaView mediaView, ObjectProperty<MediaPlayerUtil> mediaPlayerUtil) {
         getChildren().add(this.mediaView = mediaView);
-        this.mediaPlayer.bind(mediaPlayer);
-        this.mediaPlayer.addListener(new ChangeListener<MediaPlayer>() {
+        this.mediaPlayerUtil.bind(mediaPlayerUtil);
+        this.mediaPlayerUtil.addListener(new ChangeListener<MediaPlayerUtil>() {
             @Override
-            public void changed(ObservableValue ov, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
-                initialize(newPlayer);
+            public void changed(ObservableValue ov, MediaPlayerUtil oldUtil, MediaPlayerUtil newUtil) {
+                initialize(newUtil);
             }
         });
-        initialize();
+        initialize(mediaPlayerUtil.get());
     }
 
-    private MediaPlayerUtil mediaPlayerUtil;
     private DecorationFactory factory;
-
+    private MediaPlayer mediaPlayer;
+    
     public void initialize() {
         factory = new DecorationFactory();
         clearDecorations();
         markerHandlers.clear();
     }
 
-    private void initialize(MediaPlayer mediaPlayer) {
+    private void initialize(MediaPlayerUtil mediaPlayerUtil) {
         initialize();
-        //mediaPlayerUtil = new MediaPlayerUtil(mediaPlayer);
+        mediaPlayer = mediaPlayerUtil.getMeidaPlayer();
         mediaPlayer.setOnMarker(new EventHandler<MediaMarkerEvent>() {
             @Override
             public void handle(MediaMarkerEvent event) {
@@ -93,9 +95,9 @@ public class Decorator extends Group {
             @Override
             public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
                 if (newValue)
-                    addEventFilter(MouseEvent.ANY, editFilter);
-                else
                     removeEventFilter(MouseEvent.ANY, editFilter);
+                else
+                    addEventFilter(MouseEvent.ANY, editFilter);
             }
         });
     }
@@ -115,9 +117,11 @@ public class Decorator extends Group {
             public void handle(MouseEvent event) {
                 paintGroup = createDecorationGroup();
                 registerDecoratoin(paintGroup);
-                showDecoration(paintGroup);
+                if (mediaPlayer.getStatus() == Status.PAUSED)
+                    showDecoration(paintGroup);
                 setPaintStartTime();
                 DecorationItem item = createDecorationItem(new Point(), event.getX(), event.getY(), Duration.millis(0.1));
+                paintGroup.add(item);
                 item.adjustPosition(mediaView.getFitWidth(), mediaView.getFitHeight());
                 item.show(paintGroup);
             }
@@ -128,6 +132,7 @@ public class Decorator extends Group {
             public void handle(MouseEvent event) {
                 Duration elapseTime = getPaintElapseTime();
                 DecorationItem item = createDecorationItem(new Point(), event.getX(), event.getY(), elapseTime);
+                paintGroup.add(item);
                 item.adjustPosition(mediaView.getFitWidth(), mediaView.getFitHeight());
                 item.show(paintGroup);
             }
@@ -146,6 +151,7 @@ public class Decorator extends Group {
                             if (!(node instanceof Point)) continue;
                             ((Point)node).setFill(Color.BLUE);
                         }
+                        event.consume();
                     }
                 });
                 paintGroup.setOnMouseReleased(new EventHandler<MouseEvent>() {
@@ -173,7 +179,8 @@ public class Decorator extends Group {
                 final InputText inputText = new InputText();
                 final DecorationItem deco = createDecorationItem(inputText, event.getX(), event.getY());
                 registerDecoratoin(deco);
-                showDecoration(deco);
+                if (mediaPlayer.getStatus() == Status.PAUSED)
+                    showDecoration(deco);
                 inputText.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent e) {
@@ -228,13 +235,13 @@ public class Decorator extends Group {
 
     private DecorationGroup createDecorationGroup() {
         DecorationGroup deco = factory.createGroup();
-        deco.setStartTime(mediaPlayer.get().getCurrentTime());
+        deco.setStartTime(mediaPlayer.getCurrentTime());
         deco.setDisplayTime(Duration.INDEFINITE);
         return deco;
     }
 
     private DecorationItem createDecorationItem(Node node, double x, double y) {
-        return createDecorationItem(node, x, y, mediaPlayer.get().getCurrentTime());
+        return createDecorationItem(node, x, y, mediaPlayer.getCurrentTime());
     }
 
     private DecorationItem createDecorationItem(Node node, double x, double y, Duration startTime) {
@@ -264,8 +271,8 @@ public class Decorator extends Group {
                     deco.hide(Decorator.this);
                 }
             };
-            mediaPlayerUtil.addEndOfMediaListener(listenr);
-            mediaPlayerUtil.addStoppedListener(listenr);
+            mediaPlayerUtil.get().addEndOfMediaListener(listenr);
+            mediaPlayerUtil.get().addStoppedListener(listenr);
             endListeners.put(deco, listenr);
         } else {
             String key = getEndKey(deco);
@@ -274,7 +281,7 @@ public class Decorator extends Group {
     }
 
     private void registerMarkerAndHandler(String key, Duration time, MarkerHandler handler) {
-        mediaPlayer.get().getMedia().getMarkers().put(key, time);
+        mediaPlayer.getMedia().getMarkers().put(key, time);
         markerHandlers.put(key, handler);
     }
 
@@ -311,12 +318,12 @@ public class Decorator extends Group {
         String key = getEndKey(deco);
         unregisterMarkerAndHandler(key);
         StatusListener listener = endListeners.remove(deco);
-        mediaPlayerUtil.removeStoppedListener(listener);
-        mediaPlayerUtil.removeEndOfMediaListener(listener);
+        mediaPlayerUtil.get().removeStoppedListener(listener);
+        mediaPlayerUtil.get().removeEndOfMediaListener(listener);
     }
 
     private void unregisterMarkerAndHandler(String key) {
-        mediaPlayer.get().getMedia().getMarkers().remove(key);
+        mediaPlayer.getMedia().getMarkers().remove(key);
         markerHandlers.remove(key);
     }
 

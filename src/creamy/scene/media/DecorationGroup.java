@@ -29,7 +29,11 @@ public class DecorationGroup extends Decoration {
 
     @Override
     public void show(Group sheet) {
-        sheet.getChildren().add(this);
+        try {
+            sheet.getChildren().add(this);
+        } catch(IllegalArgumentException ex) {
+            return;
+        }
         for (final Decoration deco : decorations) {
             Timeline timeline = TimelineBuilder.create()
                 .keyFrames(

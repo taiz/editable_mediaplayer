@@ -1,5 +1,6 @@
 package creamy.scene.media;
 
+import creamy.scene.media.MediaPlayerUtil.StatusListener;
 import javafx.animation.FadeTransitionBuilder;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
@@ -7,6 +8,8 @@ import javafx.animation.ParallelTransitionBuilder;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -32,7 +35,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 public class PlayerPane extends BorderPane {
-    private MediaPlayer mp;
+    private ObjectProperty<MediaPlayer> mp = new SimpleObjectProperty<>();
     private MediaView mediaView;
     private final boolean repeat = false;
     private boolean stopRequested = false;
@@ -66,11 +69,11 @@ public class PlayerPane extends BorderPane {
     }
 
     @Override protected double computePrefWidth(double height) {
-        return Math.max(mp.getMedia().getWidth(), mediaBottomBar.prefWidth(height));
+        return Math.max(mp.get().getMedia().getWidth(), mediaBottomBar.prefWidth(height));
     }
 
     @Override protected double computePrefHeight(double width) {
-        return mp.getMedia().getHeight() + mediaBottomBar.prefHeight(width);
+        return mp.get().getMedia().getHeight() + mediaBottomBar.prefHeight(width);
     }
 
     @Override protected double computeMaxWidth(double height) { return Double.MAX_VALUE; }
@@ -78,13 +81,21 @@ public class PlayerPane extends BorderPane {
     @Override protected double computeMaxHeight(double width) { return Double.MAX_VALUE; }
 
     public PlayerPane(final MediaPlayer mp) {
-        this.mp = mp;
+        this.mp.set(mp);
+        MediaPlayerUtil util = new MediaPlayerUtil(this.mp);
+
         setId("player-pane");
 
         mediaView = new MediaView(mp);
+        Decorator decorator = new Decorator(mediaView, new SimpleObjectProperty<>(util));
+        decorator.startRec();
+        decorator.setEditMode(Decorator.EditMode.PAINT);
+        
         Pane mvPane = new Pane() { };
         mvPane.setId("media-pane");
-        mvPane.getChildren().add(mediaView);
+        //mvPane.getChildren().add(mediaView);
+        mvPane.getChildren().add(decorator);
+        
         setCenter(mvPane);
 
         mediaTopBar = HBoxBuilder.create()
@@ -152,6 +163,7 @@ public class PlayerPane extends BorderPane {
                 updateValues();
             }
         });
+        /*
         mp.setOnPlaying(new Runnable() {
             public void run() {
                 if (stopRequested) {
@@ -168,6 +180,32 @@ public class PlayerPane extends BorderPane {
         });
         mp.setOnEndOfMedia(new Runnable() {
             public void run() {
+                if (!repeat) {
+                    stopRequested = true;
+                    atEndOfMedia = true;
+                }
+            }
+        });
+        */
+        util.addPlayingListener(new StatusListener() {
+            @Override
+            public void changed() {
+                if (stopRequested) {
+                    mp.pause();
+                    stopRequested = false;
+                }
+            }
+        });
+        util.addReadyListener(new StatusListener() {
+            @Override
+            public void changed() {
+                duration = mp.getMedia().getDuration();
+                updateValues();
+            }
+        });
+        util.addEndOfMediaListener(new StatusListener() {
+            @Override
+            public void changed() {
                 if (!repeat) {
                     stopRequested = true;
                     atEndOfMedia = true;
@@ -311,14 +349,14 @@ public class PlayerPane extends BorderPane {
         if (playTime != null && timeSlider != null && volumeSlider != null && duration != null) {
             Platform.runLater(new Runnable() {
                 public void run() {
-                    Duration currentTime = mp.getCurrentTime();
+                    Duration currentTime = mp.get().getCurrentTime();
                     playTime.setText(formatTime(currentTime, duration));
                     timeSlider.setDisable(duration.isUnknown());
                     if (!timeSlider.isDisabled() && duration.greaterThan(Duration.ZERO) && !timeSlider.isValueChanging()) {
                         timeSlider.setValue(currentTime.divide(duration).toMillis() * 100.0);
                     }
                     if (!volumeSlider.isValueChanging()) {
-                        volumeSlider.setValue((int) Math.round(mp.getVolume() * 100));
+                        volumeSlider.setValue((int) Math.round(mp.get().getVolume() * 100));
                     }
                 }
             });
