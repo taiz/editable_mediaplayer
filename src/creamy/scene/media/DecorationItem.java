@@ -127,6 +127,12 @@ public class DecorationItem extends Decoration {
     }
 
     @Override
+    public void unsetStartAnimation() {
+        startAnimation = null;
+        startTransition = null;
+    }
+
+    @Override
     public void setEndAnimation(EndAnimation type, double time) {
         if (type == EndAnimation.FADE_OUT) {
             endAnimation = EndAnimation.FADE_OUT;
@@ -163,5 +169,11 @@ public class DecorationItem extends Decoration {
             }
             endTransition = tr;
         }
+    }
+
+    @Override
+    public void unsetEndAnimation() {
+        endAnimation = null;
+        endTransition = null;
     }
 }

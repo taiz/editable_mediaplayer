@@ -63,9 +63,9 @@ public class DecorationFactory {
             setFont(Font.font("Times New Roman", 30));
             setEffect(
                 DropShadowBuilder.create()
-                    .offsetX(1.0)
-                    .offsetY(1.0)
-                    .color(Color.CORAL)
+                    .offsetX(3.0)
+                    .offsetY(3.0)
+                    .color(Color.GREY)
                     .build()
             );
             setCache(true);

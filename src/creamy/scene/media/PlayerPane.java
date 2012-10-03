@@ -22,6 +22,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.LabelBuilder;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SliderBuilder;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleButtonBuilder;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -29,6 +33,7 @@ import javafx.scene.layout.HBoxBuilder;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBoxBuilder;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
@@ -47,6 +52,8 @@ public class PlayerPane extends BorderPane {
     private HBox mediaTopBar;
     private HBox mediaBottomBar;
     private ParallelTransition transition = null;
+    
+    private Decorator decorator;
 
     @Override protected void layoutChildren() {
         if (mediaView != null && getBottom() != null) {
@@ -87,9 +94,9 @@ public class PlayerPane extends BorderPane {
         setId("player-pane");
 
         mediaView = new MediaView(mp);
-        Decorator decorator = new Decorator(mediaView, new SimpleObjectProperty<>(util));
+        decorator = new Decorator(mediaView, new SimpleObjectProperty<>(util));
         decorator.startRec();
-        decorator.setEditMode(Decorator.EditMode.PAINT);
+        //decorator.setEditMode(Decorator.EditMode.PAINT);
         
         Pane mvPane = new Pane() { };
         mvPane.setId("media-pane");
@@ -342,7 +349,15 @@ public class PlayerPane extends BorderPane {
                  )
                 .build();
 
-        setBottom(mediaBottomBar);
+        setBottom(VBoxBuilder.create()
+                .alignment(Pos.CENTER)
+                .spacing(10)
+                .children(
+                    mediaBottomBar,
+                    buildEditButton()
+                )
+                .build()
+            );
     }
 
     protected void updateValues() {
@@ -397,5 +412,43 @@ public class PlayerPane extends BorderPane {
                                      elapsedMinutes, elapsedSeconds);
             }
         }
+    }
+    
+    private HBox buildEditButton() {
+        final ToggleGroup group = new ToggleGroup();
+        
+        final ToggleButton paint = ToggleButtonBuilder.create()
+                .toggleGroup(group)
+                .text("●:Paint")
+                .build();
+        final ToggleButton text = ToggleButtonBuilder.create()
+                .toggleGroup(group)
+                .text("Text")
+                .build();
+        group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            @Override
+            public void changed(ObservableValue<? extends Toggle> ov, Toggle oldToggle, Toggle newToggle) {
+                if (newToggle == null) {
+                    decorator.setEditable(false);
+                } else {
+                    decorator.setEditable(true);
+                    if (newToggle == paint) {
+                        decorator.setEditMode(Decorator.EditMode.PAINT);
+                    } else if (newToggle == text) {
+                        decorator.setEditMode(Decorator.EditMode.TEXT);
+                    }
+                }
+            }
+        });
+        
+        HBox editButtons = HBoxBuilder.create()
+                .spacing(0)
+                .children(
+                    paint,
+                    text
+                )
+                .alignment(Pos.CENTER)
+                .build();
+        return editButtons;
     }
 }

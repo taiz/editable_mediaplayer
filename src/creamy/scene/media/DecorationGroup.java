@@ -60,8 +60,17 @@ public class DecorationGroup extends Decoration {
                         @Override
                         public void handle(ActionEvent t) {
                             deco.hide(DecorationGroup.this);
-                            if (deco == decorations.get(decorations.size() - 1))
+                            if (deco != decorations.get(decorations.size() - 1)) return;
+                            if (deco.endTransition == null) {
                                 sheet.getChildren().remove(DecorationGroup.this);
+                            } else {
+                                deco.endTransition.setOnFinished(new EventHandler<ActionEvent>() {
+                                    @Override
+                                    public void handle(ActionEvent evnet) {
+                                        sheet.getChildren().remove(DecorationGroup.this);
+                                    }
+                                });
+                            }
                         }
                     })
                 )
@@ -78,9 +87,23 @@ public class DecorationGroup extends Decoration {
     }
 
     @Override
+    public void unsetStartAnimation() {
+        for (Decoration deco : decorations) {
+            deco.unsetStartAnimation();
+        }
+    }
+
+    @Override
     public void setEndAnimation(EndAnimation type, double time) {
         for (Decoration deco : decorations) {
             deco.setEndAnimation(type, time);
+        }
+    }
+
+    @Override
+    public void unsetEndAnimation() {
+        for (Decoration deco : decorations) {
+            deco.unsetEndAnimation();
         }
     }
 }

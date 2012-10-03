@@ -41,8 +41,8 @@ public class Main extends Application {
         playerPane = new PlayerPane(mediaPlayer);
         playerPane.setMinSize(300, 200);  
         //playerPane.setPrefSize(480, 360);
-        playerPane.setPrefSize(800, 600);
-        playerPane.setMaxSize(800, 600);
+        playerPane.setPrefSize(1024, 600);
+        playerPane.setMaxSize(1024, 768);
         root.getStylesheets().add("creamy/scene/media/PlayerPane.css");
 
         root.getChildren().add(playerPane);

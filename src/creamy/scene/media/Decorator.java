@@ -70,6 +70,12 @@ public class Decorator extends Group {
                 operateDecoration(event.getMarker().getKey());
             }
         });
+        mediaPlayerUtil.addPlayingListener(new StatusListener() {
+            @Override
+            public void changed() {
+                clearCurrentTime();
+            }
+        });
     }
     
     private void clearDecorations() {
@@ -115,10 +121,14 @@ public class Decorator extends Group {
         paintHandlers.put(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                paintGroup = createDecorationGroup();
-                registerDecoratoin(paintGroup);
-                if (mediaPlayer.getStatus() == Status.PAUSED)
+                if (mediaPlayer.getStatus() == Status.PAUSED) {
+                    paintGroup = createDecorationGroup(getCurrentTime());
+                    registerDecoratoin(paintGroup);
                     showDecoration(paintGroup);
+                } else {
+                    paintGroup = createDecorationGroup();
+                    registerDecoratoin(paintGroup);
+                }
                 setPaintStartTime();
                 DecorationItem item = createDecorationItem(new Point(), event.getX(), event.getY(), Duration.millis(0.1));
                 paintGroup.add(item);
@@ -141,7 +151,7 @@ public class Decorator extends Group {
         paintHandlers.put(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                // group.setSubMenu(sheet)
+                paintGroup.setSubMenu(Decorator.this);
                 paintGroup.setOnMousePressed(new EventHandler<MouseEvent>() {
                     @Override
                     public void handle(MouseEvent event) {
@@ -163,6 +173,7 @@ public class Decorator extends Group {
                             if (!(node instanceof Point)) continue;
                             ((Point)node).setFill(Color.WHITE);
                         }
+                        event.consume();
                     }
                 });
             }
@@ -177,15 +188,33 @@ public class Decorator extends Group {
             @Override
             public void handle(MouseEvent event) {
                 final InputText inputText = new InputText();
-                final DecorationItem deco = createDecorationItem(inputText, event.getX(), event.getY());
-                registerDecoratoin(deco);
-                if (mediaPlayer.getStatus() == Status.PAUSED)
+                final DecorationItem deco;
+                if (mediaPlayer.getStatus() == Status.PAUSED) {
+                    deco = createDecorationItem(inputText, event.getX(), event.getY(), getCurrentTime());
+                    registerDecoratoin(deco);
                     showDecoration(deco);
+                } else {
+                    deco = createDecorationItem(inputText, event.getX(), event.getY());
+                    registerDecoratoin(deco);
+                }
                 inputText.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent e) {
                         deco.setNode(new DisplayText(inputText.getText()));
-                        //deco.setSubMenu(sheet)              
+                        deco.setSubMenu(Decorator.this);
+                        deco.setOnMousePressed(new EventHandler<MouseEvent>() {
+                            @Override
+                            public void handle(MouseEvent event) {
+                                ((DisplayText)deco.getNode()).setFill(Color.BLUE);
+                                event.consume();
+                            }
+                        });
+                        deco.setOnMouseReleased(new EventHandler<MouseEvent>() {
+                            @Override
+                            public void handle(MouseEvent event) {
+                                ((DisplayText)deco.getNode()).setFill(Color.WHITE);
+                            }
+                        });
                     }
                 });
                 inputText.focusedProperty().addListener(new ChangeListener<Boolean> () {
@@ -193,7 +222,7 @@ public class Decorator extends Group {
                     public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
                         if (newValue) return;
                         deco.setNode(new DisplayText(inputText.getText()));
-                        //deco.setSubMenu(sheet)   
+                        deco.setSubMenu(Decorator.this);   
                     }
                 });
             }
@@ -234,12 +263,16 @@ public class Decorator extends Group {
     private long paintTime;
 
     private DecorationGroup createDecorationGroup() {
-        DecorationGroup deco = factory.createGroup();
-        deco.setStartTime(mediaPlayer.getCurrentTime());
-        deco.setDisplayTime(Duration.INDEFINITE);
-        return deco;
+        return createDecorationGroup(mediaPlayer.getCurrentTime());
     }
 
+    private DecorationGroup createDecorationGroup(Duration startTime) {
+        DecorationGroup deco = factory.createGroup();
+        deco.setStartTime(startTime);
+        deco.setDisplayTime(Duration.INDEFINITE);
+        return deco;        
+    }
+    
     private DecorationItem createDecorationItem(Node node, double x, double y) {
         return createDecorationItem(node, x, y, mediaPlayer.getCurrentTime());
     }
@@ -253,7 +286,7 @@ public class Decorator extends Group {
         return deco;
     }
 
-    private void registerDecoratoin(Decoration deco) {
+    public void registerDecoratoin(Decoration deco) {
         registerStart(deco);
         registerEnd(deco);
     }
@@ -264,20 +297,19 @@ public class Decorator extends Group {
     }
 
     private void registerEnd(final Decoration deco) {
-        if (deco.getEndTime() == Duration.INDEFINITE) {
-            StatusListener listenr = new StatusListener() {
-                @Override
-                public void changed() {
-                    deco.hide(Decorator.this);
-                }
-            };
-            mediaPlayerUtil.get().addEndOfMediaListener(listenr);
-            mediaPlayerUtil.get().addStoppedListener(listenr);
-            endListeners.put(deco, listenr);
-        } else {
+        if (deco.getEndTime() != Duration.INDEFINITE) {
             String key = getEndKey(deco);
-            registerMarkerAndHandler(key, deco.getStartTime(), createEndMarkerHandler(deco));
+            registerMarkerAndHandler(key, deco.getEndTime(), createEndMarkerHandler(deco));
         }
+        StatusListener listenr = new StatusListener() {
+            @Override
+            public void changed() {
+                deco.hideImmediately(Decorator.this);
+            }
+        };
+        mediaPlayerUtil.get().addEndOfMediaListener(listenr);
+        mediaPlayerUtil.get().addStoppedListener(listenr);
+        endListeners.put(deco, listenr);
     }
 
     private void registerMarkerAndHandler(String key, Duration time, MarkerHandler handler) {
@@ -304,7 +336,7 @@ public class Decorator extends Group {
         };
     }
 
-    private void unregisterDecoration(Decoration deco) {
+    public void unregisterDecoration(Decoration deco) {
         unregisterStart(deco);
         unregisterEnd(deco);
     }
@@ -355,5 +387,19 @@ public class Decorator extends Group {
 
     private String getKey(Decoration deco, String postFix) {
         return deco.getDid().toString() + postFix;
+    }
+    
+    private Duration currentTime;
+    
+    private Duration getCurrentTime() {
+        if (currentTime == null) {
+            return currentTime = mediaPlayer.getCurrentTime();
+        } else {
+            return currentTime.add(Duration.millis(0.1));
+        }
+    }
+    
+    private void clearCurrentTime() {
+        currentTime = null;
     }
 }
