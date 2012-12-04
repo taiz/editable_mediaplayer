@@ -2,12 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package creamy.scene.media;
+package main;
 
 /**
  * Copyright (c) 2008, 2012 Oracle and/or its affiliates.
  * All rights reserved. Use is subject to license terms.
  */
+import media.PlayerPane;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;

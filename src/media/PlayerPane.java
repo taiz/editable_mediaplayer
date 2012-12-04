@@ -1,6 +1,6 @@
-package creamy.scene.media;
+package media;
 
-import creamy.scene.media.MediaPlayerUtil.StatusListener;
+import media.MediaPlayerUtil.StatusListener;
 import javafx.animation.FadeTransitionBuilder;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;

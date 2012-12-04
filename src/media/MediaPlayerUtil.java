@@ -1,4 +1,4 @@
-package creamy.scene.media;
+package media;
 
 import java.util.ArrayList;
 import java.util.List;

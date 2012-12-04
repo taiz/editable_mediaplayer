@@ -1,9 +1,9 @@
-package creamy.scene.media;
+package media;
 
-import creamy.scene.media.DecorationFactory.DisplayText;
-import creamy.scene.media.DecorationFactory.InputText;
-import creamy.scene.media.DecorationFactory.Point;
-import creamy.scene.media.MediaPlayerUtil.StatusListener;
+import media.DecorationFactory.DisplayText;
+import media.DecorationFactory.InputText;
+import media.DecorationFactory.Point;
+import media.MediaPlayerUtil.StatusListener;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;

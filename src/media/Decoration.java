@@ -1,4 +1,4 @@
-package creamy.scene.media;
+package media;
 
 import javafx.animation.Transition;
 import javafx.beans.value.ChangeListener;

@@ -1,4 +1,4 @@
-package creamy.scene.media;
+package media;
 
 import javafx.animation.FadeTransitionBuilder;
 import javafx.animation.Interpolator;

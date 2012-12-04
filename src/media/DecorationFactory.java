@@ -1,4 +1,4 @@
-package creamy.scene.media;
+package media;
 
 import javafx.event.EventHandler;
 import javafx.scene.Node;
